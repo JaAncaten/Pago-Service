@@ -4,7 +4,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.vetnova.pagoservice.model.Pago;
 import com.vetnova.pagoservice.repository.PagoRepository;
@@ -15,6 +19,9 @@ public class PagoService {
     @Autowired
     private PagoRepository pagoRepository;
 
+    @Autowired
+    private RestTemplate restTemplate;
+
     public List<Pago> obtenerPagos() {
         return pagoRepository.findAll();
     }
@@ -23,8 +30,25 @@ public class PagoService {
         return pagoRepository.findById(id).orElse(null);
     }
 
-    public Pago guardarPago(Pago pago) {
-        return pagoRepository.save(pago);
+    public Pago guardarPago(Pago pago, String token) {
+        Pago pagoGuardado = pagoRepository.save(pago);
+
+        if ("PAGADO".equalsIgnoreCase(pagoGuardado.getEstado())) {
+            actualizarVentaComoPagada(pagoGuardado.getVentaId(), token);
+        }
+
+        return pagoGuardado;
+    }
+
+    private void actualizarVentaComoPagada(Long ventaId, String token) {
+        String url = "http://localhost:8089/api/ventas/" + ventaId + "/estado/PAGADA";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
     }
 
     public Pago actualizarPago(Long id, Pago pagoActualizado) {

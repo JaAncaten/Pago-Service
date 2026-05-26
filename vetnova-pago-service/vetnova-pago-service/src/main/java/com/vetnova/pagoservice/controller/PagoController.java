@@ -26,9 +26,10 @@ public class PagoController {
     }
 
     @PostMapping
-    public Pago guardarPago(@RequestBody Pago pago) {
-        return pagoService.guardarPago(pago);
-    }
+    public Pago guardarPago(@RequestBody Pago pago,
+                         @RequestHeader("Authorization") String token) {
+        return pagoService.guardarPago(pago, token);
+}
 
     @PutMapping("/{id}")
     public Pago actualizarPago(@PathVariable Long id, @RequestBody Pago pago) {
